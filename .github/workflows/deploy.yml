@@ -24,8 +24,6 @@ jobs:
 
       - name: Build project
         run: npm run build
-        env:
-          VITE_SECRET_KEY: ${{ secrets.VITE_SECRET_KEY }}
 
       - name: Upload production-ready build files
         uses: actions/upload-artifact@v4 # Updated to v4
