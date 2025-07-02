@@ -3,6 +3,7 @@ name: Deploy
 on:
   push:
     branches:
+      - main
       - staging
 
 jobs:
@@ -22,10 +23,13 @@ jobs:
       - name: Install dependencies
         uses: bahmutov/npm-install@v1
 
-      - name: Build project
-        run: npm run build
-        env:
-          VITE_SECRET_KEY: ${{ secrets.VITE_SECRET_KEY }}
+      - name: Build project (Production)
+        if: github.ref == 'refs/heads/main'
+        run: npm run build -- --mode production
+
+      - name: Build project (Staging)
+        if: github.ref == 'refs/heads/staging'
+        run: npm run build -- --mode staging
 
       - name: Upload production-ready build files
         uses: actions/upload-artifact@v4 # Updated to v4
@@ -37,7 +41,6 @@ jobs:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/staging'
 
     steps:
       - name: Download artifact
@@ -46,8 +49,17 @@ jobs:
           name: production-files
           path: ./dist
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages (Production)
+        if: github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+
+      - name: Deploy to GitHub Pages (Staging)
+        if: github.ref == 'refs/heads/staging'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          destination_dir: staging
